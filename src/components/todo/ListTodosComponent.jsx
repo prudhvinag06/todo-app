@@ -1,24 +1,68 @@
 import React, { Component } from "react";
-import AuthenticationService from "./AuthenticationService";
-import { Navigate } from 'react-router-dom'
+import todoDataService from '../../api/todo/todoDataService.js';
+import AuthenticationService from './AuthenticationService.js';
+import TodoComponent from './TodoComponent.jsx';
 
 
 class ListTodosComponent extends Component {
     constructor(props){
         super(props);
         this.state = {
-            todos : [
-                {id : 1, description : 'Learn React', done : false, targetDate : new Date()},
-                {id : 2, description : 'Learn Java', done : false, targetDate : new Date()},
-                {id : 3, description : 'Learn Sql', done : false, targetDate : new Date()}
-            ]
+            todos : [],
+            message : null
+
         }
+        this.deleteTodoClicked = this.deleteTodoClicked.bind(this)
+        this.refreshTodos = this.refreshTodos.bind(this)
+        this.updateTodoClicked = this.updateTodoClicked.bind(this)
+        this.addTodoClicked = this.addTodoClicked.bind(this)
     }
+    componentDidMount(){
+        this.refreshTodos();
+    }
+    deleteTodoClicked(id){
+        let username = AuthenticationService.getLoggedInUserName()
+        // console.log(username + " " + id)
+        todoDataService.deleteTodo(username, id)
+        .then(response => {
+            this.setState({message : `Delete of todo ${id} Successful`})
+            this.refreshTodos();
+        })
+    }
+    updateTodoClicked(id){
+        // let username = AuthenticationService.getLoggedInUserName()
+        // // console.log(username + " " + id)
+        // todoDataService.updateTodo(username, id)
+        // .then(response => {
+        //     this.setState({message : `Delete of todo ${id} Successful`})
+        //     this.refreshTodos();
+        // })
+        console.log('update')
+        this.props.navigate(`/todos/${id}`)
+    }
+
+    addTodoClicked(){
+        console.log('addTodoClicked')
+        this.props.navigate(`/todos/${-1}`)
+    }
+
+    refreshTodos(){
+        todoDataService.retriveAllTodos(AuthenticationService.getLoggedInUserName)
+        .then(response => {
+            // console.log('response in todos');
+            // console.log(response);
+            this.setState({todos : response.data})
+        })
+    }
+
+   
+
     render() {
         return (
             <div><h1>
                 List Todos
                 </h1>
+                {this.state.message && <div className = "alert alert-success">{this.state.message}</div>}
                 <div className="container">
                 <table className="table">
                     <thead>
@@ -27,6 +71,8 @@ class ListTodosComponent extends Component {
                             <th>description</th>
                             <th>status</th>
                             <th>targetDate</th>
+                            <th>update</th>
+                            <th>delete</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,6 +85,8 @@ class ListTodosComponent extends Component {
                                 <td>{todo.description}</td>
                                 <td>{todo.done.toString()}</td>
                                 <td>{todo.targetDate.toString()}</td>
+                                <td><button onClick = {() => this.updateTodoClicked(todo.id)} className="btn btn-success">Update</button></td>
+                                <td><button onClick = {() => this.deleteTodoClicked(todo.id)} className="btn btn-warning">Delete</button></td>
                                 </tr>
                             )
                            
@@ -46,6 +94,11 @@ class ListTodosComponent extends Component {
                         
                     </tbody>
                 </table>
+                <div className="row">
+                    <button className="btn btn-success" onClick={this.addTodoClicked}>
+                        Add
+                    </button>
+                </div>
                 </div>
             </div>
         )        
